@@ -27,8 +27,10 @@ public class MeanMapper extends Mapper<LongWritable, Text, Text, DoubleWritable>
             if (firsToken.charAt(0) == 'S') {
                 return;
             }
-
-            Text tokenKey = new Text(measurement);
+            
+            String anoMes = tokens[2].substring(0, Math.min(tokens[2].length(), 6));
+            Text tokenKey = new Text(measurement+" "+anoMes);
+            
             double measureLong = Double.parseDouble(tokens[measurementTokenIndex]);
             DoubleWritable tokenValue = new DoubleWritable(measureLong);
 

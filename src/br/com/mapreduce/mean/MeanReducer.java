@@ -11,7 +11,7 @@ class MeanReducer extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
     @Override
     protected void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
         String measurement = context.getConfiguration().get(MeanJob.CONF_NAME_MEASUREMENT);
-        if (key.equals( new Text(measurement))) {
+        //if (key.equals( new Text(measurement))) {
             double sum = 0;
             double count = 0;
             for (DoubleWritable value : values) {
@@ -21,6 +21,6 @@ class MeanReducer extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
             finalMean.set(sum/count);
             System.out.println("Media: " +sum/count);
             context.write(key, finalMean);
-        }
+        //}
     }
 }

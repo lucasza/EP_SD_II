@@ -31,7 +31,7 @@ public class Utils {
     }
 
     public static Scanner getScanner(String caminhoSaida) throws IOException {
-        Path part = new Path(caminhoSaida + Path.SEPARATOR + "parte-");
+        Path part = new Path(caminhoSaida + Path.SEPARATOR + "part-r-00000");
         FileSystem fs = FileSystem.get(new Configuration());
         return new Scanner(new InputStreamReader(fs.open(part)));
     }
