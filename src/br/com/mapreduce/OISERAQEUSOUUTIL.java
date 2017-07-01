@@ -2,7 +2,7 @@ package br.com.mapreduce;
 
 import java.io.IOException;
 
-public class CommandRemoteExecuter {
+public class OISERAQEUSOUUTIL {
     public static void main(String[] args) {
 
         System.out.println("Executing CommandRemoteExecuter.............");

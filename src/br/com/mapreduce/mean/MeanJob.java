@@ -62,6 +62,8 @@ public class MeanJob extends Configured implements Tool{
         meanJob.setJarByClass(getClass());
         meanJob.setJobName(NAME);
 
+        outputPath = outputPath + System.currentTimeMillis();
+        
         FileInputFormat.setInputPaths(meanJob, new Path(inputPath));
         FileOutputFormat.setOutputPath(meanJob, new Path(outputPath));
 

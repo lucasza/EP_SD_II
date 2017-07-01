@@ -12,7 +12,7 @@ class StdDeviationReducer extends Reducer<Text, DoubleWritable, Text, DoubleWrit
     private DoubleWritable standardDeviation = new DoubleWritable();
     @Override
     protected void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
-        String measurement = context.getConfiguration().get(StdDeviationJob.CONF_NAME_MEASUREMENT);
+        String measurement = context.getConfiguration().get(JobDesvioPadrao.CONF_NAME_MEASUREMENT);
         if (key.equals( new Text(measurement))) {
             List<DoubleWritable> backupList = new LinkedList<DoubleWritable>();
             double sum = 0;

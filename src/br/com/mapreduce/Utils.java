@@ -30,13 +30,13 @@ public class Utils {
         dadosInvalidos.put("SNDP", 999.9);
     }
 
-    public static Scanner getScanner(String outputPath) throws IOException {
-        Path pt = new Path(outputPath + Path.SEPARATOR + "part-r-00000");
+    public static Scanner getScanner(String caminhoSaida) throws IOException {
+        Path part = new Path(caminhoSaida + Path.SEPARATOR + "parte-");
         FileSystem fs = FileSystem.get(new Configuration());
-        return new Scanner(new InputStreamReader(fs.open(pt)));
+        return new Scanner(new InputStreamReader(fs.open(part)));
     }
 
-    public static double getInvalidData(String abbreviation) {
+    public static double getInvalidData(String abreviação) {
         dadosInvalidos = new HashMap<String, Double>();
         dadosInvalidos.put("TEMP", 9999.9);
         dadosInvalidos.put("DEWP", 9999.9);
@@ -49,6 +49,6 @@ public class Utils {
         dadosInvalidos.put("MIN", 9999.9);
         dadosInvalidos.put("PRCP", 99.99);
         dadosInvalidos.put("SNDP", 999.9);
-        return dadosInvalidos.get(abbreviation);
+        return dadosInvalidos.get(abreviação);
     }
 }

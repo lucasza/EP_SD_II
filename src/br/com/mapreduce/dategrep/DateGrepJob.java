@@ -21,7 +21,7 @@ public class DateGrepJob extends Configured implements Tool {
 
     public int run(String[] args) throws Exception {
         if(args.length < 3){
-            System.out.println(Constants.COMMAND_ARGUMENTS_DATE_GREP);
+            System.out.println(Constants.GREP_DATA_ARGS);
             //arguments are not enough, input and outputs paths must be passed in the firsts parameters
             throw new CommandFormat.NotEnoughArgumentsException(3, args.length);
         }

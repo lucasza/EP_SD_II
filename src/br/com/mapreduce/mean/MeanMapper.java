@@ -15,8 +15,8 @@ public class MeanMapper extends Mapper<LongWritable, Text, Text, DoubleWritable>
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         String measurement = context.getConfiguration().get(MeanJob.CONF_NAME_MEASUREMENT);
         int measurementTokenIndex;
-        for(measurementTokenIndex = 0; measurementTokenIndex < Constants.FIELDS.length; measurementTokenIndex++) {
-            if (Constants.FIELDS[measurementTokenIndex].equals(measurement)) {
+        for(measurementTokenIndex = 0; measurementTokenIndex < Constants.COLUNAS.length; measurementTokenIndex++) {
+            if (Constants.COLUNAS[measurementTokenIndex].equals(measurement)) {
                 break;
             }
         }

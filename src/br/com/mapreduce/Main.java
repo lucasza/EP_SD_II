@@ -1,8 +1,8 @@
 package br.com.mapreduce;
 
-import br.com.mapreduce.leastsquare.LeastSquareJob;
+import br.com.mapreduce.leastsquare.JobMinimoQuadrado;
 import br.com.mapreduce.mean.MeanJob;
-import br.com.mapreduce.stddeviation.StdDeviationJob;
+import br.com.mapreduce.stddeviation.JobDesvioPadrao;
 import org.apache.hadoop.util.ToolRunner;
 import java.io.File;
 
@@ -10,99 +10,76 @@ public class Main {
     public static void main(String[] args){
         if(args.length > 0) {
             Utils.inicializaDadosInvalidos();
-            String command = args[0];
-            if (command.equals(Constants.COMMAND_LEAST_SQUARE)) {
-                runLeastSquare(args);
+            String comando = args[0];
+            if (comando.equals(Constants.MINIMO_QUADRADO)) {
+                minimoQuadrado(args);
             }
-            else if (command.equals(Constants.COMMAND_MEAN)) {
-                runMean(args);
+            else if (comando.equals(Constants.COMMAND_MEAN)) {
+                media(args);
             }
-            else if (command.equals(Constants.COMMAND_STD_DEVIATION)) {
-                runStandardDeviation(args);
+            else if (comando.equals(Constants.DESVIO_PADRAO)) {
+                desvioPadrao(args);
             }
             else { //When the first arguments doesn't match with any command option
-                printManual();
+                imprimeManual();
             }
         }
         else{
-            printManual();
+            imprimeManual();
         }
     }
 
-    private static void printManual(){
-        //TODO - print command options and explanation
+    private static void imprimeManual(){
         System.out.println("Command options:");
-        System.out.println("\t" + Constants.COMMAND_LEAST_SQUARE + " - " + "\n\t" + Constants.COMMAND_ARGUMENTS_LEAST_SQUARE +
-                "\n\t" + Constants.COMMAND_EXPLANATION_LEAST_SQUARE);
+        System.out.println("\t" + Constants.MINIMO_QUADRADO + " - " + "\n\t" + Constants.MINIMO_QUADRADO_ARGS +
+                "\n\t" + Constants.EXPLICACAO_MINIMO_QUADRADO);
         System.out.println("\t" +Constants.COMMAND_MEAN + " - " +"\n\t" +Constants.COMMAND_ARGUMENTS_MEAN +
                 "\n\t" +Constants.COMMAND_EXPLANATION_MEAN);
-        System.out.println("\t" +Constants.COMMAND_STD_DEVIATION +" - " +"\n\t" +Constants.COMMAND_ARGUMENTS_STD_DEVIATION +
-                "\n\t" +Constants.COMMAND_EXPLANATION_STD_DEVIATION);
+        System.out.println("\t" +Constants.DESVIO_PADRAO +" - " +"\n\t" +Constants.DESVIO_PADRAO_ARGS +
+                "\n\t" +Constants.EXPLICACAO_DESVIO_PADRAO);
     }
 
-    private static void runStandardDeviation(String args[]) {
-        StdDeviationJob stdDeviationJob = new StdDeviationJob();
+    private static void desvioPadrao(String args[]) {
+        JobDesvioPadrao jobDesvioPadrao = new JobDesvioPadrao();
         try {
-            int runCode = ToolRunner.run(stdDeviationJob, args);
-            if(runCode == LeastSquareJob.RESULT_CODE_SUCCESS) {
-                System.out.println(StdDeviationJob.NAME + " success :)");
-                System.out.println(StdDeviationJob.NAME + " success :)");
-                System.out.println(StdDeviationJob.NAME + " success :)");
-                double stdDeviation = stdDeviationJob.getStandardDeviation();
-                System.out.println("standard deviation = " + stdDeviation);
-                System.out.println("standard deviation = " + stdDeviation);
-                System.out.println("standard deviation = " + stdDeviation);
+            int tentativa = ToolRunner.run(jobDesvioPadrao, args);
+            if(tentativa == JobMinimoQuadrado.RESULT_CODE_SUCCESS) {
+                double desvioPadrao = jobDesvioPadrao.getStandardDeviation();
+                System.out.println("Desvio padrão = " + desvioPadrao);
             }
         } catch (Exception e) {
-            System.out.println("Error executing " + LeastSquareJob.NAME);
+            System.out.println("Erro ao executar " + JobMinimoQuadrado.NAME);
             e.printStackTrace();
         }
     }
 
-    private static void runLeastSquare(String[] args){
-        LeastSquareJob leastSquareJob = new LeastSquareJob();
+    private static void minimoQuadrado(String[] args){
+        JobMinimoQuadrado jobMinimoQuadrado = new JobMinimoQuadrado();
         try {
-            int runCode = ToolRunner.run(leastSquareJob, args);
-            if(runCode == LeastSquareJob.RESULT_CODE_SUCCESS) {
-                System.out.println(LeastSquareJob.NAME + " success :)");
-                System.out.println(LeastSquareJob.NAME + " success :)");
-                System.out.println(LeastSquareJob.NAME + " success :)");
-
+            int tentativa = ToolRunner.run(jobMinimoQuadrado, args);
+            if(tentativa == JobMinimoQuadrado.RESULT_CODE_SUCCESS) {
+                System.out.println(JobMinimoQuadrado.NAME + " completado.");
                 double x = Double.parseDouble(args[args.length - 1]);
-                double leastSquare = leastSquareJob.getLeastSquare(x);
-                System.out.println("least square = " + leastSquare);
-                System.out.println("least square = " + leastSquare);
-                System.out.println("least square = " + leastSquare);
-            } else {
-                System.out.println(LeastSquareJob.NAME + " failed :(");
+                double minimoQuadrado = jobMinimoQuadrado.getLeastSquare(x);
+                System.out.println("Mínimo Quadrado = " + minimoQuadrado);
             }
         } catch (Exception e) {
-            System.out.println("Error executing " + LeastSquareJob.NAME);
+            System.out.println("Erro ao executar " + JobMinimoQuadrado.NAME);
             e.printStackTrace();
         }
     }
 
-    private static void runMean(String[] args){
-        MeanJob meanJob = new MeanJob();
+    private static void media(String[] args){
+        MeanJob jobMedia = new MeanJob();
         try {
-            int runCode = ToolRunner.run(meanJob, args);
-            if(runCode == MeanJob.RESULT_CODE_SUCCESS) {
-                System.out.println(MeanJob.NAME + " success :)");
-                System.out.println(MeanJob.NAME + " success :)");
-                System.out.println(MeanJob.NAME + " success :)");
-                double mean = meanJob.getMean();
-                System.out.println("mean = " + mean);
-                System.out.println("mean = " + mean);
-                System.out.println("mean = " + mean);
-            } else {
-                System.out.println(MeanJob.NAME + " failed :(");
-                System.out.println(MeanJob.NAME + " failed :(");
-                System.out.println(MeanJob.NAME + " failed :(");
+            int tentativa = ToolRunner.run(jobMedia, args);
+            if(tentativa == MeanJob.RESULT_CODE_SUCCESS) {
+                System.out.println(MeanJob.NAME + " completado.");
+                double media = jobMedia.getMean();
+                System.out.println("Média = " + media);
             }
         } catch (Exception e) {
-            System.out.println("Error executing " + MeanJob.NAME);
-            System.out.println("Error executing " + MeanJob.NAME);
-            System.out.println("Error executing " + MeanJob.NAME);
+            System.out.println("Erro ao executar " + MeanJob.NAME);
             e.printStackTrace();
         }
     }

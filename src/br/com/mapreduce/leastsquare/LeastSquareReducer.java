@@ -10,8 +10,8 @@ class LeastSquareReducer extends Reducer<DoubleWritable, DoubleWritable, Text, D
     private DoubleWritable b = new DoubleWritable(0);
     @Override
     protected void reduce(DoubleWritable x, Iterable<DoubleWritable> ys, Context context) throws IOException, InterruptedException {
-        double xMean = context.getConfiguration().getDouble(LeastSquareJob.CONF_NAME_MEAN_X, 0);
-        double yMean = context.getConfiguration().getDouble(LeastSquareJob.CONF_NAME_MEAN_Y, 0);
+        double xMean = context.getConfiguration().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_X, 0);
+        double yMean = context.getConfiguration().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_Y, 0);
         for (DoubleWritable y : ys) {
             double numerator = x.get() * (y.get() - yMean);
             double denominator = x.get() * (x.get() - xMean);
