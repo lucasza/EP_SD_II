@@ -66,7 +66,9 @@ public class StationGrepJob extends Configured implements Tool{
 		String data_fim = args[4];
 		String cIn = data_inicio.substring(0, Math.min(data_inicio.length(), 4));
 		String cFin = data_fim.substring(0, Math.min(data_fim.length(), 4));
-
+		
+		Arrays.sort(directories);
+		
 		int i = 0;
 		while (!directories[i].contains(cIn)){
 			i++;
