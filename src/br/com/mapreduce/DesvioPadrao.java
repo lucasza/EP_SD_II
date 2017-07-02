@@ -25,7 +25,8 @@ public class DesvioPadrao extends Configured implements Tool {
     public static final String NOME = "Desvio Padrão";
     private static final int FALHA = 0;
     private static final int SUCESSO = 1;
-    static final String CONF_NAME_MEASUREMENT = "CONF_NAME_MEASUREMENT";
+    static final String CONF_NAME_MEASUREMENT = "CONF_NAME_MEASUREMENT"; 
+    public static final String FAIXA_X = "FAIXA_X";
     private String diretorioTemp1;
     private String diretorioTemp2;
 
@@ -46,9 +47,11 @@ public class DesvioPadrao extends Configured implements Tool {
         String dataIni = args[4];
         String dataFim = args[5];
         String medida = args[6];
+        String faixa = args[7];
 
         Configuration config = getConf();
         config.set(CONF_NAME_MEASUREMENT, medida);
+        config.set(FAIXA_X, faixa);
 
         if(estacao != null && !estacao.equals("") ) {
             entrada = runStationGrepJob(entrada, estacao, dataIni, dataFim);
@@ -135,6 +138,7 @@ public class DesvioPadrao extends Configured implements Tool {
 
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String measurement = context.getConfiguration().get(DesvioPadrao.CONF_NAME_MEASUREMENT);
+            String faixa = context.getConfiguration().get(DesvioPadrao.FAIXA_X);
             int measurementTokenIndex;
             for(measurementTokenIndex = 0; measurementTokenIndex < Main.COLUNAS.length; measurementTokenIndex++) {
                 if (Main.COLUNAS[measurementTokenIndex].equals(measurement)) {
@@ -149,7 +153,19 @@ public class DesvioPadrao extends Configured implements Tool {
                     return;
                 }
 
-                Text tokenKey = new Text(measurement);
+                Text tokenKey;
+                if (faixa.equals("Mensal")){
+                	String anoMes = tokens[2].substring(0, Math.min(tokens[2].length(), 6));
+                	tokenKey = new Text(measurement+"\t"+anoMes);
+                }
+                else if (faixa.equals("Anual")){
+                	String anoMes = tokens[2].substring(0, Math.min(tokens[2].length(), 4));
+                	tokenKey = new Text(measurement+"\t"+anoMes);
+                }
+                else{
+                	tokenKey = new Text(measurement);
+                }
+                
                 double measureLong = Double.parseDouble(tokens[measurementTokenIndex]);
                 DoubleWritable tokenValue = new DoubleWritable(measureLong);
 
@@ -166,7 +182,7 @@ public class DesvioPadrao extends Configured implements Tool {
         @Override
         protected void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
             String measurement = context.getConfiguration().get(DesvioPadrao.CONF_NAME_MEASUREMENT);
-            if (key.equals( new Text(measurement))) {
+            //if (key.equals( new Text(measurement))) {
                 List<DoubleWritable> backupList = new LinkedList<DoubleWritable>();
                 double sum = 0;
                 double N = 0;
@@ -183,7 +199,7 @@ public class DesvioPadrao extends Configured implements Tool {
                 standardDeviation.set(Math.sqrt(deviationSum/(N-1)));
                 System.out.println("Desvio padrao: " +Math.sqrt(deviationSum/(N-1)));
                 context.write(key, standardDeviation);
-            }
+           // }
         }
     }
 }

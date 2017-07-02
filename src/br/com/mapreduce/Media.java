@@ -24,13 +24,14 @@ public class Media extends Configured implements Tool{
     private static final int RESULT_CODE_FAILED = 0;
     public static final int RESULT_CODE_SUCCESS = 1;
     public static final String CONF_NAME_MEASUREMENT = "CONF_NAME_MEASUREMENT";
+    public static final String FAIXA_X = "FAIXA_X";
     private String mDateGrepTempDir;
     private String mStationGrepTempDir;
 
     private double mean;
 
     public int run(String[] args) throws Exception {
-        if(args.length < 7){
+        if(args.length < 8){
             System.out.println(Main.MEDIA_ARGS);
             //arguments are not enough, input and outputs paths must be passed in the firsts parameters
             throw new CommandFormat.NotEnoughArgumentsException(7, args.length);
@@ -41,10 +42,12 @@ public class Media extends Configured implements Tool{
         String dateBegin = args[4];
         String dateEnd = args[5];
         String measurement = args[6];
+        String faixa = args[7];
 
         //Set params of job inside the Configuration
         Configuration configuration = getConf();
         configuration.set(CONF_NAME_MEASUREMENT, measurement);
+        configuration.set(FAIXA_X, faixa);
 
         //If the user put a work station filter as parameter, we have to run the job to filter this
         if(stationNumber != null && !stationNumber.equals("") ) {
@@ -140,6 +143,7 @@ public class Media extends Configured implements Tool{
 
         protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
             String measurement = context.getConfiguration().get(Media.CONF_NAME_MEASUREMENT);
+            String faixa = context.getConfiguration().get(Media.FAIXA_X);
             int measurementTokenIndex;
             for(measurementTokenIndex = 0; measurementTokenIndex < Main.COLUNAS.length; measurementTokenIndex++) {
                 if (Main.COLUNAS[measurementTokenIndex].equals(measurement)) {
@@ -153,9 +157,22 @@ public class Media extends Configured implements Tool{
                 if (firsToken.charAt(0) == 'S') {
                     return;
                 }
+               
                 
-                String anoMes = tokens[2].substring(0, Math.min(tokens[2].length(), 6));
-                Text tokenKey = new Text(measurement+"\t"+anoMes);
+                Text tokenKey;
+                if (faixa.equals("Mensal")){
+                	String anoMes = tokens[2].substring(0, Math.min(tokens[2].length(), 6));
+                	tokenKey = new Text(measurement+"\t"+anoMes);
+                }
+                else if (faixa.equals("Anual")){
+                	String anoMes = tokens[2].substring(0, Math.min(tokens[2].length(), 4));
+                	tokenKey = new Text(measurement+"\t"+anoMes);
+                }
+                else{
+                	tokenKey = new Text(measurement);
+                }
+                
+                
                 
                 double measureLong = Double.parseDouble(tokens[measurementTokenIndex]);
                 DoubleWritable tokenValue = new DoubleWritable(measureLong);

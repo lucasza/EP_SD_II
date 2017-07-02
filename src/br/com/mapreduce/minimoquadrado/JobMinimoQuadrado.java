@@ -70,14 +70,14 @@ public class JobMinimoQuadrado extends Configured implements Tool {
         long yMean = (long) getMean(inputPath, measurement);
         configuration.setLong(CONF_NAME_MEAN_Y, yMean);
         if(xMean != 0 || yMean != 0) {
-            return RESULT_CODE_SUCCESS;
+            //return RESULT_CODE_SUCCESS;
         }
 
         Job leastSquareJob = new Job(configuration);
         leastSquareJob.setJarByClass(getClass());
         leastSquareJob.setJobName(NAME);
 
-        outputPath = outputPath + System.currentTimeMillis();
+       // outputPath = outputPath + System.currentTimeMillis();
         
         FileInputFormat.setInputPaths(leastSquareJob, new Path(inputPath));
         FileOutputFormat.setOutputPath(leastSquareJob, new Path(outputPath));
@@ -110,19 +110,30 @@ public class JobMinimoQuadrado extends Configured implements Tool {
         return RESULT_CODE_FAILED;
     }
 
-    public double getLeastSquare(double x) {
+    public double getLeastSquareMax(double x) {
         double xMean = getConf().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_X, 0);
         double yMean = getConf().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_Y, 0);
         double a = yMean - this.b * xMean;
-        return a + this.b * x;
+        double minimo = a + this.b * x;
+        return minimo;
+
+    }
+    
+    public double getLeastSquareMin() {
+        double xMean = getConf().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_X, 0);
+        double yMean = getConf().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_Y, 0);
+        double a = yMean - this.b * xMean;
+        double minimo = a + this.b;
+        return minimo;
 
     }
 
     private double getMean(String inputPath, String measurement) {
         try {
             Media meanJob = new Media();
-            mMeanTempDir = "mean-temp-" + System.currentTimeMillis();
-            int runCode = ToolRunner.run(meanJob, new String[]{"", inputPath, mMeanTempDir, "", "", "", measurement});
+            
+            mMeanTempDir = "temporario/minimos_quadrados/media/media-temp-" + System.currentTimeMillis();
+            int runCode = ToolRunner.run(meanJob, new String[]{"", inputPath, mMeanTempDir, "", "", "", measurement,"Tudo"});
             if(runCode == Media.RESULT_CODE_SUCCESS) {
                 double mean = meanJob.getMean();
                 System.out.println(Media.NAME + " success :) = " + mean);
@@ -140,7 +151,7 @@ public class JobMinimoQuadrado extends Configured implements Tool {
     private String runDateGrepJob(String inputPath, String dateBegin, String dateEnd) {
         BuscaData procuraDataJob = new BuscaData();
 
-        mDateGrepTempDir = "date-temp-" + System.currentTimeMillis();
+        mDateGrepTempDir = "temporario/minimos_quadrados/data/data-temp-" + System.currentTimeMillis();
         int runCode;
         try {
             runCode = ToolRunner.run(procuraDataJob, new String[]{inputPath, mDateGrepTempDir, dateBegin, dateEnd});
@@ -160,7 +171,7 @@ public class JobMinimoQuadrado extends Configured implements Tool {
 
     private String runStationGrepJob(String inputPath, String stationNumber, String dateBegin, String dateEnd) {
         BuscaEstacao stationGrepJob = new BuscaEstacao();
-        mStationGrepTempDir = "station-temp-" + System.currentTimeMillis();
+        mStationGrepTempDir = "temporario/minimos_quadrados/estacao/estacao-temp-" + System.currentTimeMillis();
         int runCode;
         try {
             runCode = ToolRunner.run(stationGrepJob, new String[]{inputPath, mStationGrepTempDir, stationNumber, dateBegin, dateEnd});

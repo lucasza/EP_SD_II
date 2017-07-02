@@ -68,20 +68,28 @@ public class BuscaEstacao extends Configured implements Tool{
 		String data_fim = args[4];
 		String cIn = data_inicio.substring(0, Math.min(data_inicio.length(), 4));
 		String cFin = data_fim.substring(0, Math.min(data_fim.length(), 4));
-		
-		Arrays.sort(directories);
-		
-		int i = 0;
-		while (!directories[i].contains(cIn)){
-			i++;
+		if(directories!=null){
+			if(directories.length!=0){
+				Arrays.sort(directories);
+			
+				int i = 0;
+				while (!directories[i].contains(cIn)){
+					i++;
+				}
+				
+				while (!directories[i].contains(cFin)){
+					MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + directories[i])),TextInputFormat.class,StationMapper.class);
+					i++;		
+				}
+				MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + directories[i])),TextInputFormat.class,StationMapper.class);
+			}
+			else{
+				MultipleInputs.addInputPath(statioGrepJob,new Path((args[0])),TextInputFormat.class,StationMapper.class);
+			}
 		}
-		
-		while (!directories[i].contains(cFin)){
-			MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + directories[i])),TextInputFormat.class,StationMapper.class);
-			i++;		
+		else{
+			MultipleInputs.addInputPath(statioGrepJob,new Path((args[0])),TextInputFormat.class,StationMapper.class);
 		}
-		MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + directories[i])),TextInputFormat.class,StationMapper.class);
-		
 		
 		//for (int i =34;i<47;i++){
 			//Path inputPath = new Path((args[0] + directories[i]));

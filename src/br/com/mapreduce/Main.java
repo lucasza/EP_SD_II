@@ -5,10 +5,18 @@ import br.com.mapreduce.minimoquadrado.JobMinimoQuadrado;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.util.ToolRunner;
+
+
+
+
+
+
 // import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -65,7 +73,7 @@ public class Main {
                 System.out.println("Desvio padrão = " + desvioPadrao);
             }
         } catch (Exception e) {
-            System.out.println("Erro ao executar " + JobMinimoQuadrado.NAME);
+            System.out.println("Erro ao executar " + DesvioPadrao.NOME);
             e.printStackTrace();
         }
     }
@@ -73,18 +81,59 @@ public class Main {
     private static void minimoQuadrado(String[] args){
         JobMinimoQuadrado jobMinimoQuadrado = new JobMinimoQuadrado();
         try {
+        	args[2] = args[2]+ System.currentTimeMillis();
             int tentativa = ToolRunner.run(jobMinimoQuadrado, args);
             if(tentativa == JobMinimoQuadrado.RESULT_CODE_SUCCESS) {
                 System.out.println(JobMinimoQuadrado.NAME + " completado.");
                 double x = Double.parseDouble(args[args.length - 1]);
-                double minimoQuadrado = jobMinimoQuadrado.getLeastSquare(x);
-                System.out.println("Mínimo Quadrado = " + minimoQuadrado);
+                String faixa = args[7];
+                Text tokenKey;
+                String anoMesInicial;
+                String anoMesFinal;
+                if (faixa.equals("Mensal")){
+                	anoMesInicial = args[4].substring(0, Math.min(args[4].length(), 6));
+                	anoMesFinal = args[5].substring(0, Math.min(args[5].length(), 6));                	
+                }
+                else if (faixa.equals("Anual")){
+                	anoMesInicial = args[4].substring(0, Math.min(args[4].length(), 4));
+                	anoMesFinal = args[5].substring(0, Math.min(args[5].length(), 4));  
+                }
+                else{
+                	anoMesInicial = "1";
+                	anoMesFinal = "1";
+                }
+                
+                int dateBegin = Integer.parseInt(anoMesInicial);
+                int dateEnd = Integer.parseInt(anoMesFinal);
+                
+                int diferenca = dateEnd - dateBegin;
+                String outputPath = args[2];
+                
+                // System.out.println("Mínimo Quadrado = " + minimoQuadradoMax);
+         		try{
+         		    PrintWriter writer = new PrintWriter(outputPath+Path.SEPARATOR+"part-r-00000", "UTF-8");
+	                for (int i =-1;i<diferenca;i++){
+	                	double minimoQuadradoMax = jobMinimoQuadrado.getLeastSquareMax(i);
+	                	writer.println("Minimos\t"+ minimoQuadradoMax );
+	                }
+	                writer.close();
+        		} catch (IOException e) {
+         		   // do something
+         		}
+              //  double minimoQuadradoMax = jobMinimoQuadrado.getLeastSquareMax(dateEnd-dateBegin);
+              //  double minimoQuadradoMin = jobMinimoQuadrado.getLeastSquareMin();
+               // System.out.println("Mínimo Quadrado = " + minimoQuadradoMax);
+
+        		
+               // filer("/home/lucasza/Área de Trabalho/56/",minimoQuadradoMin,minimoQuadradoMax);
             }
         } catch (Exception e) {
             System.out.println("Erro ao executar " + JobMinimoQuadrado.NAME);
             e.printStackTrace();
         }
     }
+    
+
 
     private static void media(String[] args){
         Media jobMedia = new Media();

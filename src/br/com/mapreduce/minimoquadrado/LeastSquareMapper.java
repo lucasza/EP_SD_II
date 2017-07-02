@@ -1,12 +1,15 @@
 package br.com.mapreduce.minimoquadrado;
 
 import br.com.mapreduce.Main;
+
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Mapper;
 
 import java.io.IOException;
+
+import javax.swing.JOptionPane;
 
 class LeastSquareMapper extends Mapper<LongWritable, Text, DoubleWritable, DoubleWritable> {
     @Override
@@ -26,7 +29,8 @@ class LeastSquareMapper extends Mapper<LongWritable, Text, DoubleWritable, Doubl
                 return;
             }
 
-            double dataLong = Double.parseDouble(tokens[2]);
+            //double dataLong = Double.parseDouble(tokens[2]);
+            double dataLong = Double.parseDouble(tokens[2].substring(0, Math.min(tokens[2].length(), 6))); ;
             DoubleWritable date = new DoubleWritable(dataLong);
 
             double measureLong = Double.parseDouble(tokens[measurementTokenIndex]);
@@ -35,6 +39,7 @@ class LeastSquareMapper extends Mapper<LongWritable, Text, DoubleWritable, Doubl
             if (Main.getDadosInvalidos(measurement) != measureLong) {
                 context.write(date, measure);
             }
+          //  JOptionPane.showMessageDialog(null, "<" + date + ", " + measure + ">");
             System.out.println("<" + date + ", " + measure + ">");
         }
     }
