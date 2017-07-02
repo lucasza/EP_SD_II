@@ -1,25 +1,24 @@
-package br.com.mapreduce.minimoquadrado;
-
-import br.com.mapreduce.BuscaData;
-import br.com.mapreduce.BuscaEstacao;
-import br.com.mapreduce.Main;
-import br.com.mapreduce.Media;
+package br.com.mapreduce;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.shell.CommandFormat;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import java.io.IOException;
 import java.util.Scanner;
 
-public class JobMinimoQuadrado extends Configured implements Tool {
+public class MinimosQuadrados extends Configured implements Tool {
 
     public static final String NAME = "LeastSquareJob";
 
@@ -73,7 +72,8 @@ public class JobMinimoQuadrado extends Configured implements Tool {
             //return RESULT_CODE_SUCCESS;
         }
 
-        Job leastSquareJob = new Job(configuration);
+        @SuppressWarnings("deprecation")
+		Job leastSquareJob = new Job(configuration);
         leastSquareJob.setJarByClass(getClass());
         leastSquareJob.setJobName(NAME);
 
@@ -111,19 +111,10 @@ public class JobMinimoQuadrado extends Configured implements Tool {
     }
 
     public double getLeastSquareMax(double x) {
-        double xMean = getConf().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_X, 0);
-        double yMean = getConf().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_Y, 0);
+        double xMean = getConf().getDouble(MinimosQuadrados.CONF_NAME_MEAN_X, 0);
+        double yMean = getConf().getDouble(MinimosQuadrados.CONF_NAME_MEAN_Y, 0);
         double a = yMean - this.b * xMean;
         double minimo = a + this.b * x;
-        return minimo;
-
-    }
-    
-    public double getLeastSquareMin() {
-        double xMean = getConf().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_X, 0);
-        double yMean = getConf().getDouble(JobMinimoQuadrado.CONF_NAME_MEAN_Y, 0);
-        double a = yMean - this.b * xMean;
-        double minimo = a + this.b;
         return minimo;
 
     }
@@ -187,6 +178,56 @@ public class JobMinimoQuadrado extends Configured implements Tool {
             e.printStackTrace();
             System.exit(-1);
             return inputPath;
+        }
+    }
+    
+    private static class LeastSquareMapper extends Mapper<LongWritable, Text, DoubleWritable, DoubleWritable> {
+        @Override
+        protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            String measurement = context.getConfiguration().get(MinimosQuadrados.CONF_NAME_MEASUREMENT);
+            int measurementTokenIndex;
+            for(measurementTokenIndex = 0; measurementTokenIndex < Main.COLUNAS.length; measurementTokenIndex++) {
+                if (Main.COLUNAS[measurementTokenIndex].equals(measurement)) {
+                    break;
+                }
+            }
+
+            String[] tokens = value.toString().split("\\s+");
+            if (tokens.length > 2) {
+                String firsToken = tokens[0];
+                if (firsToken.charAt(0) == 'S') {
+                    return;
+                }
+
+                //double dataLong = Double.parseDouble(tokens[2]);
+                double dataLong = Double.parseDouble(tokens[2].substring(0, Math.min(tokens[2].length(), 6))); ;
+                DoubleWritable date = new DoubleWritable(dataLong);
+
+                double measureLong = Double.parseDouble(tokens[measurementTokenIndex]);
+                DoubleWritable measure = new DoubleWritable(measureLong);
+
+                if (Main.getDadosInvalidos(measurement) != measureLong) {
+                    context.write(date, measure);
+                }
+              //  JOptionPane.showMessageDialog(null, "<" + date + ", " + measure + ">");
+                System.out.println("<" + date + ", " + measure + ">");
+            }
+        }
+    }
+    
+    private static class LeastSquareReducer extends Reducer<DoubleWritable, DoubleWritable, Text, DoubleWritable> {
+        private DoubleWritable b = new DoubleWritable(0);
+        @Override
+        protected void reduce(DoubleWritable x, Iterable<DoubleWritable> ys, Context context) throws IOException, InterruptedException {
+            double xMean = context.getConfiguration().getDouble(MinimosQuadrados.CONF_NAME_MEAN_X, 0);
+            double yMean = context.getConfiguration().getDouble(MinimosQuadrados.CONF_NAME_MEAN_Y, 0);
+            for (DoubleWritable y : ys) {
+                double numerator = x.get() * (y.get() - yMean);
+                double denominator = x.get() * (x.get() - xMean);
+                b.set( b.get() + (numerator/denominator) );
+            }
+            context.write(new Text(""), b);
+            System.out.println("b = " + b.get());
         }
     }
 }

@@ -37,7 +37,7 @@ public class DesvioPadrao extends Configured implements Tool {
     }
 
     public int run(String[] args) throws Exception {
-        if(args.length < 7) {
+        if(args.length < 8) {
             System.out.println(Main.DESVIO_PADRAO_ARGS);
             throw new CommandFormat.NotEnoughArgumentsException(7, args.length);
         }
@@ -181,25 +181,22 @@ public class DesvioPadrao extends Configured implements Tool {
         private DoubleWritable standardDeviation = new DoubleWritable();
         @Override
         protected void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
-            String measurement = context.getConfiguration().get(DesvioPadrao.CONF_NAME_MEASUREMENT);
-            //if (key.equals( new Text(measurement))) {
-                List<DoubleWritable> backupList = new LinkedList<DoubleWritable>();
-                double sum = 0;
-                double N = 0;
-                for (DoubleWritable value : values) {
-                    sum += value.get();
-                    N += 1;
-                    backupList.add(value);
-                }
-                double mean = sum/N;
-                double deviationSum = 0;
-                for (DoubleWritable value: backupList) {
-                    deviationSum += Math.pow((value.get()-mean),2);
-                }
-                standardDeviation.set(Math.sqrt(deviationSum/(N-1)));
-                System.out.println("Desvio padrao: " +Math.sqrt(deviationSum/(N-1)));
-                context.write(key, standardDeviation);
-           // }
+            List<DoubleWritable> backupList = new LinkedList<DoubleWritable>();
+            double sum = 0;
+            double N = 0;
+            for (DoubleWritable value : values) {
+                sum += value.get();
+                N += 1;
+                backupList.add(value);
+            }
+            double mean = sum/N;
+            double deviationSum = 0;
+            for (DoubleWritable value: backupList) {
+                deviationSum += Math.pow((value.get()-mean),2);
+            }
+            standardDeviation.set(Math.sqrt(deviationSum/(N-1)));
+            System.out.println("Desvio padrao: " +Math.sqrt(deviationSum/(N-1)));
+            context.write(key, standardDeviation);
         }
     }
 }

@@ -1,19 +1,10 @@
 package br.com.mapreduce;
 
-import br.com.mapreduce.minimoquadrado.JobMinimoQuadrado;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.util.ToolRunner;
 
-
-
-
-
-
-// import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -68,7 +59,7 @@ public class Main {
         DesvioPadrao jobDesvioPadrao = new DesvioPadrao();
         try {
             int tentativa = ToolRunner.run(jobDesvioPadrao, args);
-            if(tentativa == JobMinimoQuadrado.RESULT_CODE_SUCCESS) {
+            if(tentativa == MinimosQuadrados.RESULT_CODE_SUCCESS) {
                 double desvioPadrao = jobDesvioPadrao.getDesvioPadrao();
                 System.out.println("Desvio padrão = " + desvioPadrao);
             }
@@ -79,15 +70,13 @@ public class Main {
     }
 
     private static void minimoQuadrado(String[] args){
-        JobMinimoQuadrado jobMinimoQuadrado = new JobMinimoQuadrado();
+        MinimosQuadrados jobMinimoQuadrado = new MinimosQuadrados();
         try {
         	args[2] = args[2]+ System.currentTimeMillis();
             int tentativa = ToolRunner.run(jobMinimoQuadrado, args);
-            if(tentativa == JobMinimoQuadrado.RESULT_CODE_SUCCESS) {
-                System.out.println(JobMinimoQuadrado.NAME + " completado.");
-                double x = Double.parseDouble(args[args.length - 1]);
+            if(tentativa == MinimosQuadrados.RESULT_CODE_SUCCESS) {
+                System.out.println(MinimosQuadrados.NAME + " completado.");
                 String faixa = args[7];
-                Text tokenKey;
                 String anoMesInicial;
                 String anoMesFinal;
                 if (faixa.equals("Mensal")){
@@ -128,7 +117,7 @@ public class Main {
                // filer("/home/lucasza/Área de Trabalho/56/",minimoQuadradoMin,minimoQuadradoMax);
             }
         } catch (Exception e) {
-            System.out.println("Erro ao executar " + JobMinimoQuadrado.NAME);
+            System.out.println("Erro ao executar " + MinimosQuadrados.NAME);
             e.printStackTrace();
         }
     }
