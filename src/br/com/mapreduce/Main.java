@@ -1,50 +1,67 @@
 package br.com.mapreduce;
 
-import br.com.mapreduce.leastsquare.JobMinimoQuadrado;
-import br.com.mapreduce.mean.MeanJob;
-import br.com.mapreduce.stddeviation.JobDesvioPadrao;
+import br.com.mapreduce.minimoquadrado.JobMinimoQuadrado;
+
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ToolRunner;
-import java.io.File;
+// import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args){
-        if(args.length > 0) {
-            Utils.inicializaDadosInvalidos();
-            String comando = args[0];
-            if (comando.equals(Constants.MINIMO_QUADRADO)) {
-                minimoQuadrado(args);
-            }
-            else if (comando.equals(Constants.COMMAND_MEAN)) {
-                media(args);
-            }
-            else if (comando.equals(Constants.DESVIO_PADRAO)) {
-                desvioPadrao(args);
-            }
-            else { //When the first arguments doesn't match with any command option
-                imprimeManual();
-            }
-        }
-        else{
-            imprimeManual();
-        }
-    }
+	
+	static final String MINIMO_QUADRADO = "minimo";
+    static final String MEDIA = "media";
+    static final String DESVIO_PADRAO = "desvio";
+    public static final String MINIMO_QUADRADO_ARGS = "minimo <input path> <output path> <work station number> <start date (yyyyMMdd)> <end date (yyyyMMdd)> <measure> <x>";
+    public static final String FETCH_ESTACAO_ARGS = "station <input path> <output path> <work station number>";
+    public static final String FETCH_DATA_ARGS = "date <input path> <output path> <start date (yyyyMMdd)> <end date (yyyyMMdd)>";
+    public static final String MEDIA_ARGS = "media <input path> <output path> <work station number> <start date (yyyyMMdd)> <end date (yyyyMMdd)> <measure>";
+    public static final String DESVIO_PADRAO_ARGS = "desvio <input path> <output path> <work station number> <start date (yyyyMMdd)> <end date (yyyyMMdd)> <measure>";
 
-    private static void imprimeManual(){
-        System.out.println("Command options:");
-        System.out.println("\t" + Constants.MINIMO_QUADRADO + " - " + "\n\t" + Constants.MINIMO_QUADRADO_ARGS +
-                "\n\t" + Constants.EXPLICACAO_MINIMO_QUADRADO);
-        System.out.println("\t" +Constants.COMMAND_MEAN + " - " +"\n\t" +Constants.COMMAND_ARGUMENTS_MEAN +
-                "\n\t" +Constants.COMMAND_EXPLANATION_MEAN);
-        System.out.println("\t" +Constants.DESVIO_PADRAO +" - " +"\n\t" +Constants.DESVIO_PADRAO_ARGS +
-                "\n\t" +Constants.EXPLICACAO_DESVIO_PADRAO);
-    }
-
+    public static final String[] COLUNAS = {
+        "STN---",
+        "WBAN",
+        "YEARMODA",
+        "TEMP",
+        "DEWP",
+        "SLP",
+        "STP",
+        "VISIB",
+        "WDSP",
+        "MXSPD",
+        "GUST",
+        "MAX",
+        "MIN",
+        "PRCP",
+        "SNDP",
+        "FRSHTTYEARMODA",
+        "TEMP",
+        "DEWP",
+        "SLP",
+        "STP",
+        "VISIB",
+        "WDSP",
+        "MXSPD",
+        "GUST",
+        "MAX",
+        "MIN",
+        "PRCP",
+        "SNDP",
+        "FRSHTT"
+    };
+	
     private static void desvioPadrao(String args[]) {
-        JobDesvioPadrao jobDesvioPadrao = new JobDesvioPadrao();
+        DesvioPadrao jobDesvioPadrao = new DesvioPadrao();
         try {
             int tentativa = ToolRunner.run(jobDesvioPadrao, args);
             if(tentativa == JobMinimoQuadrado.RESULT_CODE_SUCCESS) {
-                double desvioPadrao = jobDesvioPadrao.getStandardDeviation();
+                double desvioPadrao = jobDesvioPadrao.getDesvioPadrao();
                 System.out.println("Desvio padrão = " + desvioPadrao);
             }
         } catch (Exception e) {
@@ -70,17 +87,73 @@ public class Main {
     }
 
     private static void media(String[] args){
-        MeanJob jobMedia = new MeanJob();
+        Media jobMedia = new Media();
         try {
             int tentativa = ToolRunner.run(jobMedia, args);
-            if(tentativa == MeanJob.RESULT_CODE_SUCCESS) {
-                System.out.println(MeanJob.NAME + " completado.");
+            if(tentativa == Media.RESULT_CODE_SUCCESS) {
+                System.out.println(Media.NAME + " completado.");
                 double media = jobMedia.getMean();
                 System.out.println("Média = " + media);
             }
         } catch (Exception e) {
-            System.out.println("Erro ao executar " + MeanJob.NAME);
+            System.out.println("Erro ao executar " + Media.NAME);
             e.printStackTrace();
         }
     }
+
+    public static void main(String[] args){
+        if(args.length > 0) {
+            inicializaDadosInvalidos();
+            String comando = args[0];
+            if (comando.equals(MINIMO_QUADRADO)) {
+                minimoQuadrado(args);
+            }
+            else if (comando.equals(DESVIO_PADRAO)) {
+                desvioPadrao(args);
+            }
+            else if (comando.equals(MEDIA)) {
+                media(args);
+            }
+        }
+    }
+    
+    private static Map<String, Double> dadosInvalidos;
+
+    public static void inicializaDadosInvalidos() {
+        dadosInvalidos = new HashMap<String, Double>();
+        dadosInvalidos.put("TEMP", 9999.9);
+        dadosInvalidos.put("DEWP", 9999.9);
+        dadosInvalidos.put("SLP", 9999.9);
+        dadosInvalidos.put("STP", 9999.9);
+        dadosInvalidos.put("VISIB", 999.9);
+        dadosInvalidos.put("WDSP", 999.9);
+        dadosInvalidos.put("GUST", 999.9);
+        dadosInvalidos.put("MAX", 9999.9);
+        dadosInvalidos.put("MIN", 9999.9);
+        dadosInvalidos.put("PRCP", 99.99);
+        dadosInvalidos.put("SNDP", 999.9);
+    }
+
+    public static Scanner getScanner(String caminhoSaida) throws IOException {
+        Path part = new Path(caminhoSaida + Path.SEPARATOR + "part-r-00000");
+        FileSystem fs = FileSystem.get(new Configuration());
+        return new Scanner(new InputStreamReader(fs.open(part)));
+    }
+
+    public static double getDadosInvalidos(String abreviação) {
+        dadosInvalidos = new HashMap<String, Double>();
+        dadosInvalidos.put("TEMP", 9999.9);
+        dadosInvalidos.put("DEWP", 9999.9);
+        dadosInvalidos.put("SLP", 9999.9);
+        dadosInvalidos.put("STP", 9999.9);
+        dadosInvalidos.put("VISIB", 999.9);
+        dadosInvalidos.put("WDSP", 999.9);
+        dadosInvalidos.put("GUST", 999.9);
+        dadosInvalidos.put("MAX", 9999.9);
+        dadosInvalidos.put("MIN", 9999.9);
+        dadosInvalidos.put("PRCP", 99.99);
+        dadosInvalidos.put("SNDP", 999.9);
+        return dadosInvalidos.get(abreviação);
+    }
 }
+

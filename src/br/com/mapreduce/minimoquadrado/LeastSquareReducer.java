@@ -1,4 +1,4 @@
-package br.com.mapreduce.leastsquare;
+package br.com.mapreduce.minimoquadrado;
 
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.Text;

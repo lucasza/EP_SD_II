@@ -1,7 +1,6 @@
-package br.com.mapreduce.leastsquare;
+package br.com.mapreduce.minimoquadrado;
 
-import br.com.mapreduce.Constants;
-import br.com.mapreduce.Utils;
+import br.com.mapreduce.Main;
 import org.apache.hadoop.io.DoubleWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
@@ -14,8 +13,8 @@ class LeastSquareMapper extends Mapper<LongWritable, Text, DoubleWritable, Doubl
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         String measurement = context.getConfiguration().get(JobMinimoQuadrado.CONF_NAME_MEASUREMENT);
         int measurementTokenIndex;
-        for(measurementTokenIndex = 0; measurementTokenIndex < Constants.COLUNAS.length; measurementTokenIndex++) {
-            if (Constants.COLUNAS[measurementTokenIndex].equals(measurement)) {
+        for(measurementTokenIndex = 0; measurementTokenIndex < Main.COLUNAS.length; measurementTokenIndex++) {
+            if (Main.COLUNAS[measurementTokenIndex].equals(measurement)) {
                 break;
             }
         }
@@ -33,7 +32,7 @@ class LeastSquareMapper extends Mapper<LongWritable, Text, DoubleWritable, Doubl
             double measureLong = Double.parseDouble(tokens[measurementTokenIndex]);
             DoubleWritable measure = new DoubleWritable(measureLong);
 
-            if (Utils.getInvalidData(measurement) != measureLong) {
+            if (Main.getDadosInvalidos(measurement) != measureLong) {
                 context.write(date, measure);
             }
             System.out.println("<" + date + ", " + measure + ">");

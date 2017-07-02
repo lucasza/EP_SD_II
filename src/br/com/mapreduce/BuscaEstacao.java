@@ -1,10 +1,10 @@
-package br.com.mapreduce.stationgrep;
+package br.com.mapreduce;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Arrays;
-
-import br.com.mapreduce.Constants;
+import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -14,13 +14,15 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 
-public class StationGrepJob extends Configured implements Tool{
+public class BuscaEstacao extends Configured implements Tool{
     public static final String NAME = "StationGrepJob";
     public static final int RESULT_CODE_SUCCESS = 1;
     private static final int RESULT_CODE_FAILED = 0;
@@ -28,7 +30,7 @@ public class StationGrepJob extends Configured implements Tool{
 
     public int run(String[] args) throws Exception {
         if(args.length < 3){
-            System.out.println(Constants.GREP_ESTACAO_ARGS);
+            System.out.println(Main.FETCH_ESTACAO_ARGS);
             //arguments are not enough, input and outputs paths must be passed in the firsts parameters
             throw new CommandFormat.NotEnoughArgumentsException(3, args.length);
         }
@@ -37,7 +39,7 @@ public class StationGrepJob extends Configured implements Tool{
         String stationNumber = args[2];
 
         Configuration configuration = getConf();
-        configuration.setInt(StationGrepJob.CONF_NAME_STATION, Integer.parseInt(stationNumber));
+        configuration.setInt(BuscaEstacao.CONF_NAME_STATION, Integer.parseInt(stationNumber));
 
         Job statioGrepJob = new Job(configuration);
 
@@ -103,6 +105,30 @@ public class StationGrepJob extends Configured implements Tool{
             return RESULT_CODE_SUCCESS;
         }
         return RESULT_CODE_FAILED;
+    }
+    
+    private static class StationMapper extends Mapper<LongWritable, Text, LongWritable, Text> {
+        @Override
+        protected void map(LongWritable inputKey, Text value, Context context) throws IOException, InterruptedException {
+            StringTokenizer stringTokenizer = new StringTokenizer(value.toString());
+            if (stringTokenizer.countTokens() > 0) {
+                String token = stringTokenizer.nextToken();
+                if (token.charAt(0) == 'S') {
+                    return;
+                }
+
+                long outputKey = Long.parseLong(token);
+                context.write(new LongWritable(outputKey), value);
+                //System.out.println("<" + outputKey + ", " + value.toString().substring(0, 100) + ">");
+            }
+        }
+    }
+    
+    private static class StationReducer extends BuscaReducer {
+        protected boolean isInsideGrep(Context context, LongWritable key) {
+            int station = context.getConfiguration().getInt(BuscaEstacao.CONF_NAME_STATION, -1);
+            return key.equals( new LongWritable(station));
+        }
     }
 }
 

@@ -1,25 +1,25 @@
-package br.com.mapreduce.mean;
-
-import br.com.mapreduce.Constants;
-import br.com.mapreduce.Utils;
-import br.com.mapreduce.dategrep.DateGrepJob;
-import br.com.mapreduce.stationgrep.StationGrepJob;
+package br.com.mapreduce;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.shell.CommandFormat;
 import org.apache.hadoop.io.DoubleWritable;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
+// import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+import java.io.IOException;
 import java.util.Scanner;
 
-public class MeanJob extends Configured implements Tool{
+public class Media extends Configured implements Tool{
     public static final String NAME = "Mean";
     private static final int RESULT_CODE_FAILED = 0;
     public static final int RESULT_CODE_SUCCESS = 1;
@@ -31,7 +31,7 @@ public class MeanJob extends Configured implements Tool{
 
     public int run(String[] args) throws Exception {
         if(args.length < 7){
-            System.out.println(Constants.COMMAND_ARGUMENTS_MEAN);
+            System.out.println(Main.MEDIA_ARGS);
             //arguments are not enough, input and outputs paths must be passed in the firsts parameters
             throw new CommandFormat.NotEnoughArgumentsException(7, args.length);
         }
@@ -58,7 +58,8 @@ public class MeanJob extends Configured implements Tool{
             inputPath = runDateGrepJob(inputPath, dateBegin, dateEnd);
         }
 
-        Job meanJob = new Job(configuration);
+        @SuppressWarnings("deprecation")
+		Job meanJob = new Job(configuration);
         meanJob.setJarByClass(getClass());
         meanJob.setJobName(NAME);
 
@@ -80,7 +81,7 @@ public class MeanJob extends Configured implements Tool{
         */
 
         if(completed){
-            Scanner scanner = Utils.getScanner(outputPath);
+            Scanner scanner = Main.getScanner(outputPath);
             scanner.next();
             this.mean = Double.parseDouble(scanner.next());
             return RESULT_CODE_SUCCESS;
@@ -93,44 +94,96 @@ public class MeanJob extends Configured implements Tool{
     }
 
     private String runDateGrepJob(String inputPath, String dateBegin, String dateEnd) {
-        DateGrepJob dateGrepJob = new DateGrepJob();
+        BuscaData procuraDataJob = new BuscaData();
 
         mDateGrepTempDir = "temporario/media/data/data-temp-" + System.currentTimeMillis();
         int runCode;
         try {
-            runCode = ToolRunner.run(dateGrepJob, new String[]{inputPath, mDateGrepTempDir, dateBegin, dateEnd});
-            if(runCode == DateGrepJob.RESULT_CODE_SUCCESS) {
-                System.out.println(DateGrepJob.NAME + " success :)");
+            runCode = ToolRunner.run(procuraDataJob, new String[]{inputPath, mDateGrepTempDir, dateBegin, dateEnd});
+            if(runCode == BuscaData.RESULT_CODE_SUCCESS) {
+                System.out.println(BuscaData.NAME + " success :)");
                 return mDateGrepTempDir;
             } else {
-                System.out.println(DateGrepJob.NAME + " failed :(");
+                System.out.println(BuscaData.NAME + " failed :(");
                 return inputPath;
             }
         } catch (Exception e) {
-            System.out.println("Error executing " + DateGrepJob.NAME);
+            System.out.println("Error executing " + BuscaData.NAME);
             e.printStackTrace();
             return inputPath;
         }
     }
 
     private String runStationGrepJob(String inputPath, String stationNumber,String dateBegin,String dateEnd) {
-        StationGrepJob stationGrepJob = new StationGrepJob();
+        BuscaEstacao stationGrepJob = new BuscaEstacao();
         mStationGrepTempDir = "temporario/media/estacao/estacao-temp-" + System.currentTimeMillis();
         int runCode;
         try {
             runCode = ToolRunner.run(stationGrepJob, new String[]{inputPath, mStationGrepTempDir, stationNumber,dateBegin,dateEnd});
-            if(runCode == StationGrepJob.RESULT_CODE_SUCCESS) {
-                System.out.println(StationGrepJob.NAME + " success :)");
+            if(runCode == BuscaEstacao.RESULT_CODE_SUCCESS) {
+                System.out.println(BuscaEstacao.NAME + " success :)");
                 return mStationGrepTempDir;
             } else {
-                System.out.println(StationGrepJob.NAME + " failed :(");
+                System.out.println(BuscaEstacao.NAME + " failed :(");
                 return inputPath;
             }
         } catch (Exception e) {
-            System.out.println("Error executing " + StationGrepJob.NAME);
+            System.out.println("Error executing " + BuscaEstacao.NAME);
             e.printStackTrace();
             System.exit(-1);
             return inputPath;
+        }
+    }
+    
+    private static class MeanMapper extends Mapper<LongWritable, Text, Text, DoubleWritable> {
+        @Override
+
+        protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+            String measurement = context.getConfiguration().get(Media.CONF_NAME_MEASUREMENT);
+            int measurementTokenIndex;
+            for(measurementTokenIndex = 0; measurementTokenIndex < Main.COLUNAS.length; measurementTokenIndex++) {
+                if (Main.COLUNAS[measurementTokenIndex].equals(measurement)) {
+                    break;
+                }
+            }
+
+            String[] tokens = value.toString().split("\\s+");
+            if (tokens.length > 2) {
+                String firsToken = tokens[0];
+                if (firsToken.charAt(0) == 'S') {
+                    return;
+                }
+                
+                String anoMes = tokens[2].substring(0, Math.min(tokens[2].length(), 6));
+                Text tokenKey = new Text(measurement+"\t"+anoMes);
+                
+                double measureLong = Double.parseDouble(tokens[measurementTokenIndex]);
+                DoubleWritable tokenValue = new DoubleWritable(measureLong);
+
+                if (Main.getDadosInvalidos(measurement) != measureLong) {
+                    context.write(tokenKey, tokenValue);
+                }
+                System.out.println("<" + measurement + ", " + measureLong + ">");
+            }
+        }
+    }
+    
+    private static class MeanReducer extends Reducer<Text, DoubleWritable, Text, DoubleWritable> {
+        private DoubleWritable finalMean = new DoubleWritable();
+        @Override
+        protected void reduce(Text key, Iterable<DoubleWritable> values, Context context) throws IOException, InterruptedException {
+            //String measurement = context.getConfiguration().get(MeanJob.CONF_NAME_MEASUREMENT);
+            //if (key.equals( new Text(measurement))) {
+                double sum = 0;
+                double count = 0;
+                for (DoubleWritable value : values) {
+                    sum += value.get();
+                    count += 1;
+                }
+                finalMean.set(sum/count);
+                System.out.println("Media: " +sum/count);
+                context.write(key, finalMean);
+            //}
         }
     }
 }

@@ -1,10 +1,10 @@
-package br.com.mapreduce.leastsquare;
+package br.com.mapreduce.minimoquadrado;
 
-import br.com.mapreduce.Constants;
-import br.com.mapreduce.Utils;
-import br.com.mapreduce.dategrep.DateGrepJob;
-import br.com.mapreduce.mean.MeanJob;
-import br.com.mapreduce.stationgrep.StationGrepJob;
+import br.com.mapreduce.BuscaData;
+import br.com.mapreduce.BuscaEstacao;
+import br.com.mapreduce.Main;
+import br.com.mapreduce.Media;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -39,7 +39,7 @@ public class JobMinimoQuadrado extends Configured implements Tool {
     public int run(String[] args) throws Exception {
         int argsExcepted = 8;
         if(args.length < argsExcepted){
-            System.out.println(Constants.MINIMO_QUADRADO_ARGS);
+            System.out.println(Main.MINIMO_QUADRADO_ARGS);
             //arguments are not enough, input and outputs paths must be passed in the firsts parameters
             throw new CommandFormat.NotEnoughArgumentsException(argsExcepted, args.length);
         }
@@ -53,7 +53,7 @@ public class JobMinimoQuadrado extends Configured implements Tool {
         //If the user put a work station filter as parameter, we have to run the job to filter this
         if(stationNumber != null && !stationNumber.equals("") ) {
             //if the filter by date was succeed, update the inputPath for the next Job work
-            inputPath = runStationGrepJob(inputPath, stationNumber);
+            inputPath = runStationGrepJob(inputPath, stationNumber, dateBegin, dateEnd);
         }
 
         //If the user put a work begin date and end date as parameter, we have to run the job to filter this
@@ -65,7 +65,7 @@ public class JobMinimoQuadrado extends Configured implements Tool {
         //Set params of job inside the Configuration
         Configuration configuration = getConf();
         configuration.set(CONF_NAME_MEASUREMENT, measurement);
-        long xMean = (long) getMean(inputPath, Constants.COLUNAS[2]);
+        long xMean = (long) getMean(inputPath, Main.COLUNAS[2]);
         configuration.setLong(CONF_NAME_MEAN_X, xMean);
         long yMean = (long) getMean(inputPath, measurement);
         configuration.setLong(CONF_NAME_MEAN_Y, yMean);
@@ -77,6 +77,8 @@ public class JobMinimoQuadrado extends Configured implements Tool {
         leastSquareJob.setJarByClass(getClass());
         leastSquareJob.setJobName(NAME);
 
+        outputPath = outputPath + System.currentTimeMillis();
+        
         FileInputFormat.setInputPaths(leastSquareJob, new Path(inputPath));
         FileOutputFormat.setOutputPath(leastSquareJob, new Path(outputPath));
 
@@ -96,7 +98,7 @@ public class JobMinimoQuadrado extends Configured implements Tool {
         */
 
         if(completed){
-            Scanner scanner = Utils.getScanner(outputPath);
+            Scanner scanner = Main.getScanner(outputPath);
             String line = scanner.nextLine();
             while (scanner.hasNext()){
                 line = scanner.nextLine();
@@ -118,59 +120,59 @@ public class JobMinimoQuadrado extends Configured implements Tool {
 
     private double getMean(String inputPath, String measurement) {
         try {
-            MeanJob meanJob = new MeanJob();
+            Media meanJob = new Media();
             mMeanTempDir = "mean-temp-" + System.currentTimeMillis();
             int runCode = ToolRunner.run(meanJob, new String[]{"", inputPath, mMeanTempDir, "", "", "", measurement});
-            if(runCode == MeanJob.RESULT_CODE_SUCCESS) {
+            if(runCode == Media.RESULT_CODE_SUCCESS) {
                 double mean = meanJob.getMean();
-                System.out.println(MeanJob.NAME + " success :) = " + mean);
+                System.out.println(Media.NAME + " success :) = " + mean);
                 return mean;
             } else {
-                System.out.println(MeanJob.NAME + " failed :(");
+                System.out.println(Media.NAME + " failed :(");
             }
         } catch (Exception e) {
-            System.out.println("Error executing " + MeanJob.NAME);
+            System.out.println("Error executing " + Media.NAME);
             e.printStackTrace();
         }
         return 0;
     }
 
     private String runDateGrepJob(String inputPath, String dateBegin, String dateEnd) {
-        DateGrepJob dateGrepJob = new DateGrepJob();
+        BuscaData procuraDataJob = new BuscaData();
 
         mDateGrepTempDir = "date-temp-" + System.currentTimeMillis();
         int runCode;
         try {
-            runCode = ToolRunner.run(dateGrepJob, new String[]{inputPath, mDateGrepTempDir, dateBegin, dateEnd});
-            if(runCode == DateGrepJob.RESULT_CODE_SUCCESS) {
-                System.out.println(DateGrepJob.NAME + " success :)");
+            runCode = ToolRunner.run(procuraDataJob, new String[]{inputPath, mDateGrepTempDir, dateBegin, dateEnd});
+            if(runCode == BuscaData.RESULT_CODE_SUCCESS) {
+                System.out.println(BuscaData.NAME + " success :)");
                 return mDateGrepTempDir;
             } else {
-                System.out.println(DateGrepJob.NAME + " failed :(");
+                System.out.println(BuscaData.NAME + " failed :(");
                 return inputPath;
             }
         } catch (Exception e) {
-            System.out.println("Error executing " + DateGrepJob.NAME);
+            System.out.println("Error executing " + BuscaData.NAME);
             e.printStackTrace();
             return inputPath;
         }
     }
 
-    private String runStationGrepJob(String inputPath, String stationNumber) {
-        StationGrepJob stationGrepJob = new StationGrepJob();
+    private String runStationGrepJob(String inputPath, String stationNumber, String dateBegin, String dateEnd) {
+        BuscaEstacao stationGrepJob = new BuscaEstacao();
         mStationGrepTempDir = "station-temp-" + System.currentTimeMillis();
         int runCode;
         try {
-            runCode = ToolRunner.run(stationGrepJob, new String[]{inputPath, mStationGrepTempDir, stationNumber});
-            if(runCode == StationGrepJob.RESULT_CODE_SUCCESS) {
-                System.out.println(StationGrepJob.NAME + " success :)");
+            runCode = ToolRunner.run(stationGrepJob, new String[]{inputPath, mStationGrepTempDir, stationNumber, dateBegin, dateEnd});
+            if(runCode == BuscaEstacao.RESULT_CODE_SUCCESS) {
+                System.out.println(BuscaEstacao.NAME + " success :)");
                 return mStationGrepTempDir;
             } else {
-                System.out.println(StationGrepJob.NAME + " failed :(");
+                System.out.println(BuscaEstacao.NAME + " failed :(");
                 return inputPath;
             }
         } catch (Exception e) {
-            System.out.println("Error executing " + StationGrepJob.NAME);
+            System.out.println("Error executing " + BuscaEstacao.NAME);
             e.printStackTrace();
             System.exit(-1);
             return inputPath;

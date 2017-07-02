@@ -6,7 +6,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 
 import java.io.IOException;
 
-public abstract class GrepReducer extends Reducer<LongWritable, Text, Text, Text>{
+public abstract class BuscaReducer extends Reducer<LongWritable, Text, Text, Text>{
     @Override
     protected void reduce(LongWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
         if ( isInsideGrep(context, key) ) {

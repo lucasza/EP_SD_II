@@ -1,6 +1,7 @@
-package br.com.mapreduce.dategrep;
+package br.com.mapreduce;
 
-import br.com.mapreduce.Constants;
+import java.io.IOException;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -8,11 +9,13 @@ import org.apache.hadoop.fs.shell.CommandFormat;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 
-public class DateGrepJob extends Configured implements Tool {
+public class BuscaData extends Configured implements Tool {
     public static final String NAME = "DateGrepJob";
     public static final int RESULT_CODE_SUCCESS = 1;
     private static final int RESULT_CODE_FAILED = 0;
@@ -21,7 +24,7 @@ public class DateGrepJob extends Configured implements Tool {
 
     public int run(String[] args) throws Exception {
         if(args.length < 3){
-            System.out.println(Constants.GREP_DATA_ARGS);
+            System.out.println(Main.FETCH_DATA_ARGS);
             //arguments are not enough, input and outputs paths must be passed in the firsts parameters
             throw new CommandFormat.NotEnoughArgumentsException(3, args.length);
         }
@@ -55,5 +58,31 @@ public class DateGrepJob extends Configured implements Tool {
             return RESULT_CODE_SUCCESS;
         }
         return RESULT_CODE_FAILED;
+    }
+    
+    private static class DateReducer extends BuscaReducer {
+        protected boolean isInsideGrep(Context context, LongWritable key) {
+            int begin = context.getConfiguration().getInt(BuscaData.CONF_NAME_DATE_BEGIN, -1);
+            int end = context.getConfiguration().getInt(BuscaData.CONF_NAME_DATE_END, -1);
+            return key.compareTo( new LongWritable( begin ) ) >= 0 &&  key.compareTo( new LongWritable( end ) ) <= 0;
+        }
+    }
+    
+    private static class DateMapper extends Mapper<LongWritable, Text, LongWritable, Text> {
+        @Override
+        protected void map(LongWritable inputKey, Text value, Context context) throws IOException, InterruptedException {
+            String[] tokens = value.toString().split("\\s+");
+            if (tokens.length > 2) {
+                String token = tokens[0];
+                if (token.charAt(0) == 'S') {
+                    return;
+                }
+                token = tokens[2];
+
+                long outputKey = Long.parseLong(token);
+                context.write(new LongWritable(outputKey), value);
+                //System.out.println("<" + outputKey + ", " + value.toString().substring(0, 100) + ">");
+            }
+        }
     }
 }
