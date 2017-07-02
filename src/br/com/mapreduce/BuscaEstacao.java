@@ -6,8 +6,11 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.StringTokenizer;
 
+import javax.swing.JOptionPane;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.shell.CommandFormat;
 import org.apache.hadoop.io.LongWritable;
@@ -52,7 +55,11 @@ public class BuscaEstacao extends Configured implements Tool{
         statioGrepJob.setOutputValueClass(Text.class);
         statioGrepJob.setOutputValueClass(Text.class);
 
-        //BAGUNÇA DO CASSINI
+        
+        
+        //FileSystem fs = FileSystem.get(configuration);
+        
+        //CASSINI é amor, CASSINI é vida
 		File file = new File(args[0]);
 		String[] directories = file.list(new FilenameFilter() {
 		  @Override
@@ -66,36 +73,11 @@ public class BuscaEstacao extends Configured implements Tool{
 		String data_fim = args[4];
 		String cIn = data_inicio.substring(0, Math.min(data_inicio.length(), 4));
 		String cFin = data_fim.substring(0, Math.min(data_fim.length(), 4));
-		if(directories!=null){
-			if(directories.length!=0){
-				Arrays.sort(directories);
-			
-				int i = 0;
-				while (!directories[i].contains(cIn)){
-					i++;
-				}
-				
-				while (!directories[i].contains(cFin)){
-					MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + directories[i])),TextInputFormat.class,StationMapper.class);
-					i++;		
-				}
-				MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + directories[i])),TextInputFormat.class,StationMapper.class);
-			}
-			else{
-				MultipleInputs.addInputPath(statioGrepJob,new Path((args[0])),TextInputFormat.class,StationMapper.class);
-			}
-		}
-		else{
-			MultipleInputs.addInputPath(statioGrepJob,new Path((args[0])),TextInputFormat.class,StationMapper.class);
-		}
 		
-		//for (int i =34;i<47;i++){
-			//Path inputPath = new Path((args[0] + directories[i]));
-		//	MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + directories[i])),TextInputFormat.class,StationMapper.class);
-		//	MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + "1940")),TextInputFormat.class,StationMapper.class);
-		//	MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + "1941")),TextInputFormat.class,StationMapper.class);
-			
-			//}
+		for(int i = Integer.parseInt(cIn); i <=Integer.parseInt(cFin);i++ ){
+			MultipleInputs.addInputPath(statioGrepJob,new Path((args[0] + String.valueOf(i))),TextInputFormat.class,StationMapper.class);
+			}
+		
         //CABOU BAGUNCINHA
         
         //FileInputFormat.setInputPaths(statioGrepJob, inputPath);
