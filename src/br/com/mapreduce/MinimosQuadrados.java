@@ -18,6 +18,8 @@ import org.apache.hadoop.util.ToolRunner;
 import java.io.IOException;
 import java.util.Scanner;
 
+import javax.swing.JOptionPane;
+
 public class MinimosQuadrados extends Configured implements Tool {
 
     public static final String NAME = "LeastSquareJob";
@@ -77,7 +79,7 @@ public class MinimosQuadrados extends Configured implements Tool {
         leastSquareJob.setJarByClass(getClass());
         leastSquareJob.setJobName(NAME);
 
-       // outputPath = outputPath + System.currentTimeMillis();
+       outputPath = outputPath + System.currentTimeMillis();
         
         FileInputFormat.setInputPaths(leastSquareJob, new Path(inputPath));
         FileOutputFormat.setOutputPath(leastSquareJob, new Path(outputPath));

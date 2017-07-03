@@ -66,7 +66,7 @@ public class Media extends Configured implements Tool{
         meanJob.setJarByClass(getClass());
         meanJob.setJobName(NAME);
 
-        outputPath = outputPath + System.currentTimeMillis();
+        outputPath = outputPath + "media";
         
         FileInputFormat.setInputPaths(meanJob, new Path(inputPath));
         FileOutputFormat.setOutputPath(meanJob, new Path(outputPath));

@@ -6,6 +6,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.ToolRunner;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -13,6 +14,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+
+import javax.swing.JOptionPane;
 
 public class Main {
 	
@@ -74,7 +77,6 @@ public class Main {
     private static void minimoQuadrado(String[] args){
         MinimosQuadrados jobMinimoQuadrado = new MinimosQuadrados();
         try {
-        	args[2] = args[2]+ System.currentTimeMillis();
             int tentativa = ToolRunner.run(jobMinimoQuadrado, args);
             if(tentativa == MinimosQuadrados.RESULT_CODE_SUCCESS) {
                 System.out.println(MinimosQuadrados.NAME + " completado.");
@@ -103,32 +105,49 @@ public class Main {
                 String tempo = String.valueOf(System.currentTimeMillis());
                 java.nio.file.Path currentRelativePath = Paths.get("");
                 String s = currentRelativePath.toAbsolutePath().toString();
-                String caminho = s + "/temporario/minimos_quadrados/resultado/resultado-temp-" + tempo + Path.SEPARATOR+"resultado";
+                //new File(s+ ).mkdirs();
+                
+                String caminho = s + Path.SEPARATOR+ "part-r-00000";
+                try{
+                	File file = new File(caminho);
+                    file.delete();
+                } catch (Exception e){}
+
                 // System.out.println("Mínimo Quadrado = " + minimoQuadradoMax);
+     		    PrintWriter writer = new PrintWriter(caminho, "UTF-8");
+                for (int i =-1;i<diferenca;i++){
+                	double minimoQuadradoMax = jobMinimoQuadrado.getLeastSquareMax(i);
+                	writer.println("Minimos\t"+ minimoQuadradoMax );
+                }
+                writer.close();
+                Runtime run = Runtime.getRuntime();
+                String pasta = outputPath + "minimos/";
+
+
          		try{
-         		    PrintWriter writer = new PrintWriter(caminho, "UTF-8");
-	                for (int i =-1;i<diferenca;i++){
-	                	double minimoQuadradoMax = jobMinimoQuadrado.getLeastSquareMax(i);
-	                	writer.println("Minimos\t"+ minimoQuadradoMax );
-	                }
-	                writer.close();
-        		} catch (IOException e) {
+	                run.exec("hadoop fs -mkdir "+ pasta);
+         		} catch (IOException e) {
          		   // do something
          		}
+         		
+                String whatever = "hadoop fs -put "+ caminho + " " + pasta;
+
+                run.exec(whatever);
+
               //  double minimoQuadradoMax = jobMinimoQuadrado.getLeastSquareMax(dateEnd-dateBegin);
               //  double minimoQuadradoMin = jobMinimoQuadrado.getLeastSquareMin();
                // System.out.println("Mínimo Quadrado = " + minimoQuadradoMax);
          		
          		Configuration conf = new Configuration();
          	    //localhost HDFS system
-         	    conf.set("fs.defaultFS", "hdfs://localhost/");
-         	    conf.set("mapred.job.tracker", "localhost:50070");
-         	    
-         	    FileSystem fs = FileSystem.get(conf);
-         	    Path p = new Path(outputPath);
-         	    Path q = new Path(caminho);
-         	    
-         	    fs.copyFromLocalFile(q, p);
+//         	    conf.set("fs.defaultFS", "hdfs://localhost/");
+//         	    conf.set("mapred.job.tracker", "localhost:54310");
+//         	    
+//         	    FileSystem fs = FileSystem.get(conf);
+//         	    Path p = new Path(outputPath);
+//         	    Path q = new Path(caminho);
+//         	    
+         	    //fs.copyFromLocalFile(q, p);
         		
                // filer("/home/lucasza/Área de Trabalho/56/",minimoQuadradoMin,minimoQuadradoMax);
             }

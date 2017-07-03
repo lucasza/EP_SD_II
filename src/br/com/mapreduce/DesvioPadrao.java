@@ -66,7 +66,7 @@ public class DesvioPadrao extends Configured implements Tool {
         stdDevJob.setJarByClass(getClass());
         stdDevJob.setJobName(NOME);
         
-        saida = saida + System.currentTimeMillis();
+        saida = saida + "desvio";
 
         FileInputFormat.setInputPaths(stdDevJob, new Path(entrada));
         FileOutputFormat.setOutputPath(stdDevJob, new Path(saida));
