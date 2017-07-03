@@ -1,5 +1,6 @@
 package br.com.mapreduce;
 
+import org.apache.commons.httpclient.URI;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -8,6 +9,7 @@ import org.apache.hadoop.util.ToolRunner;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -98,9 +100,13 @@ public class Main {
                 int diferenca = dateEnd - dateBegin;
                 String outputPath = args[2];
                 
+                String tempo = String.valueOf(System.currentTimeMillis());
+                java.nio.file.Path currentRelativePath = Paths.get("");
+                String s = currentRelativePath.toAbsolutePath().toString();
+                String caminho = s + "/temporario/minimos_quadrados/resultado/resultado-temp-" + tempo + Path.SEPARATOR+"resultado";
                 // System.out.println("Mínimo Quadrado = " + minimoQuadradoMax);
          		try{
-         		    PrintWriter writer = new PrintWriter(outputPath+Path.SEPARATOR+"part-r-00000", "UTF-8");
+         		    PrintWriter writer = new PrintWriter(caminho, "UTF-8");
 	                for (int i =-1;i<diferenca;i++){
 	                	double minimoQuadradoMax = jobMinimoQuadrado.getLeastSquareMax(i);
 	                	writer.println("Minimos\t"+ minimoQuadradoMax );
@@ -112,7 +118,17 @@ public class Main {
               //  double minimoQuadradoMax = jobMinimoQuadrado.getLeastSquareMax(dateEnd-dateBegin);
               //  double minimoQuadradoMin = jobMinimoQuadrado.getLeastSquareMin();
                // System.out.println("Mínimo Quadrado = " + minimoQuadradoMax);
-
+         		
+         		Configuration conf = new Configuration();
+         	    //localhost HDFS system
+         	    conf.set("fs.defaultFS", "hdfs://localhost/");
+         	    conf.set("mapred.job.tracker", "localhost:50070");
+         	    
+         	    FileSystem fs = FileSystem.get(conf);
+         	    Path p = new Path(outputPath);
+         	    Path q = new Path(caminho);
+         	    
+         	    fs.copyFromLocalFile(q, p);
         		
                // filer("/home/lucasza/Área de Trabalho/56/",minimoQuadradoMin,minimoQuadradoMax);
             }
